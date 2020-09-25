@@ -1,0 +1,27 @@
+#include<iostream>
+#include<opencv2/opencv.hpp>
+using namespace cv;
+int main()
+{
+	std::cout << "hello! opencv!" << std::endl;
+
+	cv::Mat M1(2, 2, CV_8UC3, Scalar(0, 0, 255));
+	std::cout << "M1 =" << std::endl;
+	std::cout << M1 << std::endl;
+
+	cv::Mat M2(2, 2, CV_8UC3, 1);
+	std::cout << "M2 =" << std::endl;
+	std::cout << M2 << std::endl;
+	/*
+		cv::Mat M3;
+		M3.create(3, 4, CV_8UC3);
+		int height = M3.rows;
+		int width = M3.cols;
+		std::cout << "M3 =" << std::endl;
+		std::cout << M3 << std::endl;
+		std::cout << "size =" << height << "," << width << "," << std::endl;
+	*/
+	system("pause");
+	return 0;
+
+}

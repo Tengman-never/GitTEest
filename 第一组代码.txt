@@ -1,0 +1,12 @@
+#include<iostream>
+#include<opencv2/opencv.hpp>
+using namespace cv;
+int main()
+{
+	std::cout << "hello! opencv!" << std::endl;
+	cv::Mat srcImage = cv::imread("E:/C++demo/Project2/1.jpg");
+	cv::imshow("srcImage", srcImage);
+	waitKey(0);
+	return 0;
+
+}
