@@ -4,14 +4,14 @@ using namespace cv;
 
 void test1()
 {
-	cv::Mat img = imread("E:/C++demo/Project1/1.jpg");
-	imshow("before", img);
+	cv::Mat img = imread("E:/C++demo/Project1/1.jpg");//用imread函数读取一张图片
+	imshow("before", img);//显示图片
 	int height = img.rows;
 	int width = img.cols;
-	for (int j = 0; j < height; j++)
+	for (int j = 0; j < height; j++)//j表示高度，j,i
 	{
-		for (int i = 0; i < width; i++)
-		{
+		for (int i = 0; i < width; i++)//i表示宽度
+		{   //把三个通道的平均值赋给average，并由average
 			uchar average = (img.at<Vec3b>(j, i)[0] + img.at<Vec3b>(j, i)[1] + img.at<Vec3b>(j, i)[2]) / 3;
 			img.at<Vec3b>(j, i)[0] = average;
 			img.at<Vec3b>(j, i)[1] = average;
