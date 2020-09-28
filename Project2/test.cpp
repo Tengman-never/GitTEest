@@ -81,8 +81,41 @@ void test3()
 */
 void test4()
 {
+	cv::Mat img = imread("E:/C++demo/Project1/1.jpg");
+	int height = img.rows;
+	int width = img.cols;
+	std::vector<cv::Mat>channels;//声明vector，作为分离后3个通道图像的保存容器
+	cv::split(img, channels);
+	cv::Mat B = channels.at(0);
+	cv::Mat G = channels.at(1);
+	cv::Mat R = channels.at(2);
+
+	cv::Mat srcM = imread("E:/C++demo/Project1/1.jpg", 0);//转换成灰度图像，使原图成为单通道图像
+	int c = srcM.channels();
+	std::cout << "=" <<std:: endl << c <<std:: endl;
+	float histgram[256];
+	for (int j = 0; j < height; j++)
+	{
+		uchar* data = srcM.ptr <uchar>(j);
+		for (int i = 0; i < width; i++)
+		{
+			histgram[data[i]] = histgram[data[i]] + 1;
+		}
+	}
+	for (int i = 0; i < 256; i++) {
+
+		std::cout << "histgram" << histgram[i] << std::endl;
+
+	}
+	imshow("img", img);
+	waitKey(0);//等待用户按键
+}
+/*
+void test5()
+{
 
 }
+*/
 int main()
 {
 	//test1();
