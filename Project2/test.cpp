@@ -5,41 +5,28 @@ using namespace std;
 
 void test1()
 {
-	VideoCapture cap(0);
-	double scale = 0.5;
-	//0-180∑Ù…´
-	double i_minH = 0;
-	double i_maxH = 20;
-	//0-255
-	double i_minS = 43;
-	double i_maxS = 255;
-	//0-255 
-	double i_minV = 55;
-	double i_maxV = 255;
-
-	while (1)
-	{
-		Mat frame;
-		Mat hsvMat;
-		Mat detectMat;
-		cap >>frame;
-		Size ResImgSiz = Size(frame.cols*scale, frame.rows*scale);
-		Mat rFrame = Mat(ResImgSiz, frame.type());
-		resize(frame, rFrame, ResImgSiz, INTER_LINEAR);
-
-		cvtColor(rFrame, hsvMat, COLOR_BGR2HSV);
-		rFrame.copyTo(detectMat);
-
-		cv::inRange(hsvMat, Scalar(i_minH, i_minS, i_minV), Scalar(i_maxH, i_maxS, i_maxV), detectMat);
-
-		imshow("whie:in the range", detectMat);
-		imshow("frame", rFrame);
-		waitKey(30); 
-
-	}	
+	    cv::Mat img = imread("E:/C++demo/Project2/04/1.jpg", 0);
+		Mat src;
+		threshold(img, src,100, 255, THRESH_BINARY);
+		imshow("src", src);
+	    Size(6,6);
+		Mat getStructuringElement(int shape, Size ksize, Point anchor = Point(-1,-1));		
+		Mat dst;
+		Mat kernel = getStructuringElement(MORPH_RECT, Size (3,3), Point(-1, -1));
+		//∏Ø ¥
+		/*erode(src,dst,kernel);
+		imshow("fushi", dst);*/
+		//≈Ú’Õ
+		/*dilate(src, dst, kernel);
+		imshow("pengzhang", dst);*/
+		//morphologyEx(src, dst, 2, kernel, Point(-1, -1));
+		//imshow("open", dst);
+		morphologyEx(src, dst, 3, kernel, Point(-1, -1));
+		imshow("close", dst);
+		waitKey(0); 
 }
 
-
+/*
 void test2()
 {
 	cv::Mat img = imread("E:/C++demo/Project2/1.jpg",0);
@@ -85,12 +72,12 @@ int test3()
 	return 0;
 }
 
-
+*/
 int main()
 {
-	//test1();
+	test1();
 	//test2();
-	test3();
+	//test3();
 	system("pause");
 	return 0;
 }
