@@ -45,7 +45,7 @@ void test2()
 	Mat centroids;
 	int num = connectedComponentsWithStats(image, labels, stats, centroids, 8, CV_32S);
 	//使用不同的颜色标记连通域
-	vector<Vec3b> color(num);
+	/*vector<Vec3b> color(num);
 	color[0] = Vec3b(0, 0, 0);  //设置背景颜色
 	for (int i = 1; i < num; i++)
 	{
@@ -62,8 +62,8 @@ void test2()
 			if (label == 0) continue;
 			dst.at<Vec3b>(row, col) = color[label];
 		}
-	}
-	imshow("连通域标记图像", dst);
+	}*/
+	//imshow("连通域标记图像", dst);
 	//标记连通域
 	for (int i = 1; i < num; i++) 
 	{
@@ -74,9 +74,9 @@ void test2()
 		int height = stats.at<int>(i, CC_STAT_HEIGHT);
 		int area = stats.at<int>(i, CC_STAT_AREA);		
 		cout<<x<<","<<y<<","<<width<<","<<height<<","<<area<< endl;
-		int Rx =(static_cast<unsigned int>(pt[0]));
-		int Ry =(static_cast<unsigned int>(pt[1]));
-		circle(image, Point(Rx,Ry), 2, Scalar(0, 0, 255), -1, 8, 0);
+		//int Rx =(static_cast<unsigned int>(pt[0]));
+		//int Ry =(static_cast<unsigned int>(pt[1]));
+		circle(image, Point(pt[0],pt[1]), 2, Scalar(0, 0, 255), -1, 8, 0);
 		rectangle(image, Rect(x, y, width, height), Scalar(255, 0, 255), 1, 8, 0);
 	}
 	cout << "硬币数=" << num - 1 << endl;//硬币数
