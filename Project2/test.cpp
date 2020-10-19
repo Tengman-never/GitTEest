@@ -1,6 +1,5 @@
-#include<iostream>
+ï»¿#include<iostream>
 #include<opencv2/opencv.hpp>
-#define _CRT_SECURE_NO_WARNINGS
 using namespace cv;
 using namespace std;
 /*
@@ -11,112 +10,190 @@ void test1()
 		threshold(img, src,100, 255, THRESH_BINARY);
 		imshow("src", src);
 	    Size(6,6);
-		Mat getStructuringElement(int shape, Size ksize, Point anchor = Point(-1,-1));	//½á¹¹Ëã×Ó
+		Mat getStructuringElement(int shape, Size ksize, Point anchor = Point(-1,-1));	//ç»“æ„ç®—å­
 		Mat dst;
 		Mat kernel = getStructuringElement(MORPH_RECT, Size (3,3), Point(-1, -1));
-		/*--------¸¯Ê´----------*/
+		/*--------è…èš€----------*/
 		//erode(src,dst,kernel);
 		//imshow("fushi", dst);
-		/*--------ÅòÕÍ-----------*/
+		/*--------è†¨èƒ€-----------*/
 		//dilate(src, dst, kernel);
 		//imshow("pengzhang", dst);
-		/*--------¿ªÔËËã---------*/
+		/*--------å¼€è¿ç®—---------*/
 		//morphologyEx(src, dst, 2, kernel, Point(-1, -1));
 		//imshow("open", dst);
-		/*---------±ÕÔËËã--------*/
+		/*---------é—­è¿ç®—--------*/
 		//morphologyEx(src, dst, 3, kernel, Point(-1, -1));
 		//imshow("close", dst);
 		//waitKey(0); 
 //}
-
-RNG rng(12345);
+/*
+RNG rng(123);
 void test2()
 {
-	cv::Mat src = imread("E:/C++demo/Project2/04/1.jpg", 0);
-	threshold(src, src, 100, 255, THRESH_BINARY);
-	imshow("¶şÖµ»¯ºó", src);
+	cv::Mat src_binary;
+	cv::Mat image_gray;
+
+	cv::Mat src = imread("E:/C++demo/Project2/04/1.jpg");
+	cvtColor(src, image_gray, COLOR_BGR2GRAY);
+
+	threshold(image_gray, src_binary, 100, 255, THRESH_BINARY);
+	imshow("äºŒå€¼åŒ–å", src_binary);
+
 	Mat image;
 	Mat kernel = getStructuringElement(MORPH_RECT, Size(5,5), Point(-1, -1));
-	morphologyEx(src, image,3, kernel, Point(-1, -1));
-	imshow("±ÕÔËËã´¦Àíºó", image);
-
-	Mat labels= Mat::zeros(image.size(), CV_32S);
+	morphologyEx(src_binary, image, MORPH_CLOSE, kernel, Point(-1, -1));
+	imshow("é—­è¿ç®—å¤„ç†å", image);
+	Mat labels;
 	Mat stats;
 	Mat centroids;
 	int num = connectedComponentsWithStats(image, labels, stats, centroids, 8, CV_32S);
-	//Ê¹ÓÃ²»Í¬µÄÑÕÉ«±ê¼ÇÁ¬Í¨Óò
-	/*vector<Vec3b> color(num);
-	color[0] = Vec3b(0, 0, 0);  //ÉèÖÃ±³¾°ÑÕÉ«
-	for (int i = 1; i < num; i++)
+
+	//ä½¿ç”¨ä¸åŒçš„é¢œè‰²æ ‡è®°è¿é€šåŸŸ
+	vector<Vec3b> colors(num);
+	colors[0] = Vec3b(0, 0, 0);
+	//int b = rng.uniform(0, 255);
+	//int g = rng.uniform(0, 255);
+	//int r = rng.uniform(0, 255);
+	for (int i = 1; i < num; i++) 
 	{
-		color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)); //ÉèÖÃÄ¿±êÑÕÉ«
+		colors[i] = Vec3b(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
 	}
-	Mat dst = Mat::zeros(image.size(), image.type());
-	int w = image.cols;
-	int h = image.rows;
+	Mat dst = Mat::zeros(src.size(), src.type());
+	int w = src.cols;
+	int h = src.rows;
 	for (int row = 0; row < h; row++)
 	{
-		for (int col = 0; col < w; col++) 
+		for (int col = 0; col < w; col++)
 		{
 			int label = labels.at<int>(row, col);
 			if (label == 0) continue;
-			dst.at<Vec3b>(row, col) = color[label];
+			dst.at<Vec3b>(row, col) = colors[label];
 		}
-	}*/
-	//imshow("Á¬Í¨Óò±ê¼ÇÍ¼Ïñ", dst);
-	//±ê¼ÇÁ¬Í¨Óò
-	for (int i = 1; i < num; i++) 
+	}
+	imshow("è¿é€šåŸŸæ ‡è®°å›¾åƒ", dst);
+	
+	//æ ‡è®°è¿é€šåŸŸ
+
+	for (int i = 1; i < num; i++)
 	{
 		Vec2d pt = centroids.at<Vec2d>(i, 0);
 		int x = stats.at<int>(i, CC_STAT_LEFT);
 		int y = stats.at<int>(i, CC_STAT_TOP);
 		int width = stats.at<int>(i, CC_STAT_WIDTH);
 		int height = stats.at<int>(i, CC_STAT_HEIGHT);
-		int area = stats.at<int>(i, CC_STAT_AREA);		
-		cout<<x<<","<<y<<","<<width<<","<<height<<","<<area<< endl;
-		//int Rx =(static_cast<unsigned int>(pt[0]));
-		//int Ry =(static_cast<unsigned int>(pt[1]));
-		circle(image, Point(pt[0],pt[1]), 2, Scalar(0, 0, 255), -1, 8, 0);
-		rectangle(image, Rect(x, y, width, height), Scalar(255, 0, 255), 1, 8, 0);
+		int area = stats.at<int>(i, CC_STAT_AREA);
+		cout << "è¿é€šåŸŸä¸­å¿ƒçš„çŸ©é˜µ" << endl;
+		cout << pt[0] << "," << pt[1] << endl;
+		cout << "çŠ¶æ€çŸ©é˜µ" << endl;
+		cout << x << "," << y << "," << width << "," << height << "," << area << endl;
+		circle(dst, Point(pt[0], pt[1]), 2, Scalar(0, 0, 255), -1, 8, 0);
+		rectangle(dst, Rect(x, y, width, height), Scalar(255, 0, 255), 1, 8, 0);
 	}
-	cout << "Ó²±ÒÊı=" << num - 1 << endl;//Ó²±ÒÊı
-	imshow("Á¬Í¨Óò±ê¼ÇÍ¼Ïñ", image);
+	imshow("è¿é€šåŸŸæ ‡è®°å›¾åƒ", dst);
+	cout << "ç¡¬å¸æ•°=" << num - 1 << endl;//ç¡¬å¸æ•°
+
 	waitKey(0);
 }
+*/
 
 void test3()
-{
-	Mat src = imread("E:/C++demo/Project2/04/2.jpg", 0);
-	imshow("src", src);
-	Mat image;
-	threshold(src, image, 60, 255, THRESH_OTSU);//¶şÖµ»¯
+{	
+	cv::Mat src_binary;
+	cv::Mat image_gray;
 
-	Mat kernel = getStructuringElement(MORPH_RECT, Size(10,10), Point(-1, -1));
-	morphologyEx(src, image, 3, kernel, Point(-1, -1));
-	imshow("±ÕÔËËã´¦Àíºó", image);
+	cv::Mat src = imread("E:/C++demo/Project2/04/2.jpg");
+	cvtColor(src, image_gray, COLOR_BGR2GRAY);
+
+	threshold(image_gray, src_binary, 100, 255, THRESH_BINARY);
+	imshow("äºŒå€¼åŒ–å", src_binary);
+	// å¯¹å›¾åƒè¿›è¡Œæ‰€æœ‰åƒç´ ç”¨ ï¼ˆ255- åƒç´ å€¼ï¼‰
+	Mat image;
+	src.copyTo(image);
+	// è·å–å›¾åƒå®½ã€é«˜
+	int channels = src.channels();
+	int rows = src.rows; //é«˜---è¡Œ
+	int col = src.cols;//å®½---åˆ—
+	int cols = src.cols * channels;
+	if (src.isContinuous())
+	{
+		cols *= rows;
+		rows = 1;
+	}
+	// æ¯ä¸ªåƒç´ ç‚¹çš„æ¯ä¸ªé€šé“255å–åï¼ˆ0-255ï¼ˆé»‘-ç™½ï¼‰ï¼‰
+	uchar* p1;
+	uchar* p2;
+	for (int row = 0; row < rows; row++) 
+	{
+		p1 = src.ptr<uchar>(row);// è·å–åƒç´ æŒ‡é’ˆ
+		p2 = image.ptr<uchar>(row);
+		for (int col = 0; col < cols; col++)
+		{
+			*p2 = 255 - *p1; // å–å
+			p2++;
+			p1++;
+		}
+	}
+	imshow("å–ååçš„å›¾åƒ", image);
+
+	Mat image_Ostu;//å¤§æ´¥æ³•åˆ†å‰²åçš„å›¾åƒ
+	Mat image_Open;//å¼€è¿ç®—åçš„å›¾åƒ
+	//å¤§æ´¥æ³•åˆ†å‰²å›¾åƒ
+	threshold(image, image_Ostu, 0, 255, THRESH_OTSU);
+	imshow("å¤§æ´¥æ³•åçš„å›¾åƒ", image_Ostu);
+	/*Mat kernel = getStructuringElement(MORPH_RECT, Size(11, 11));
+	morphologyEx(image_Ostu, image_Open, 2, kernel, Point(-1, -1), 1);//å¼€è¿ç®—
 	Mat labels;
 	Mat stats;
 	Mat centroids;
-	int num = connectedComponentsWithStats(image, labels, stats, centroids, 8, CV_32S);
-	vector<Vec3b> color(num);
-	color[0] = Vec3b(0, 0, 0);  //ÉèÖÃ±³¾°ÑÕÉ«
-	for (int i = 1; i < num; i++)
+	int num = connectedComponentsWithStats(image_Open, labels, stats, centroids, 8, CV_32S);
+	imshow("å¼€è¿ç®—åçš„å›¾åƒ", image_Open);
+	/*
+	//è¾“å‡ºè¿é€šåŸŸä¿¡æ¯
+	for (int i = 0; i < num; i++)
 	{
-		color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)); //ÉèÖÃÄ¿±êÑÕÉ«
-	}
-	
-	
-	
-	waitKey(0); //µÈ´ıÓÃ»§°´¼ü
-	system("pause");
-}
+		//å„ä¸ªè¿é€šåŸŸçš„ç»Ÿè®¡ä¿¡æ¯ä¿å­˜åœ¨stasMatä¸­
+		Vec2d pt = centroids.at<Vec2d>(i, 0);
 
+		int x = stats.at<int>(i, CC_STAT_LEFT);
+		int y = stats.at<int>(i, CC_STAT_TOP);
+		int width = stats.at<int>(i, CC_STAT_WIDTH);
+		int height = stats.at<int>(i, CC_STAT_HEIGHT);
+		int area = stats.at<int>(i, CC_STAT_AREA);
+
+		cout << x << "," << y << "," << width << "," << height << "," << area << endl;
+		circle(image_Open , Point(pt[0], pt[1]), 2, Scalar(0, 0, 255), -1, 8, 0);
+		rectangle(image_Open, Rect(x, y, width, height), Scalar(255, 255, 255), 1, 8, 0);
+	}
+	cout << "è¿é€šåŸŸä¸ªæ•°ä¸º " << num - 1 << endl;//-1,numåŒ…æ‹¬èƒŒæ™¯
+
+	vector<Vec3f> circles;
+	HoughCircles(image, circles, CV_HOUGH_GRADIENT, 1.5, 10, 200, 100, 0, 0);
+	for (size_t i = 0; i < circles.size(); i++)
+	{
+		Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+		int radius = cvRound(circles[i][2]);
+		//ç»˜åˆ¶åœ†å¿ƒ
+		circle(image, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+		//ç»˜åˆ¶åœ†è½®å»“
+		circle(image, center, radius, Scalar(155, 50, 255), 3, 8, 0);
+
+	}
+
+	count(image_Open);
+	imshow("æ ‡è®°åçš„å›¾åƒ", image_Open);
+	std::vector<cv::Vec3b> colors(num);
+	colors[0] = cv::Vec3b(0, 0, 0);//èƒŒæ™¯é»‘è‰²
+
+*/
+	waitKey(0);
+}
 
 int main()
 {
 	//test1();
-	test2();
-	//test3();
+	//test2();
+	test3();
 	system("pause");
 	return 0;
 }
