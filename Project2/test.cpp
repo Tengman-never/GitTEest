@@ -161,12 +161,12 @@ void test3()
 
 	waitKey(0);
 }
-
 int main()
 {
 	//test1();
 	//test2();
-	test3();
+	//test3();
+	test4();
 	system("pause");
 	return 0;
 }
