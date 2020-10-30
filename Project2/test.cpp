@@ -135,13 +135,13 @@ int test5()
 
 		Mat image; 
 		Mat dst;
-		GaussianBlur(rFrame, image, Size(5, 5), 3, 3);		
+		GaussianBlur(rFrame, image, Size(11,11), 3, 3);		
 		rFrame.copyTo(dst);
 		image.copyTo(dst, detectMat);
 
-		imshow("detectMat", detectMat);//原图
-		imshow("rFrame", image);//高斯滤波后
-		imshow("dst", dst);
+		imshow("HSV图像", detectMat);
+		imshow("未磨皮", dst);
+		imshow("高斯滤波后", image);
 		waitKey(30);
 	}
 }
