@@ -2,148 +2,149 @@
 #include<opencv2/opencv.hpp>
 using namespace cv;
 using namespace std;
-//中值滤波
+//canny算子
 int test1()
 {
-	    VideoCapture cap(0);
-	    double scale = 0.5;
-		if (!cap.isOpened())
-		{
-			cout << "不能打开视频文件" << endl;
-			return -1;
-		}
-		Mat dstImage;
-		while (1)
-		{
-			Mat frame;
-			cap >> frame;
-			imshow("src", frame);
-			medianBlur(frame, dstImage, 5);
-			imshow("中值滤波", dstImage);
-			waitKey(30); 
-		}
-
-		return 0;
+	VideoCapture cap(0);
+	double scale = 0.5;
+	if (!cap.isOpened())
+	{
+		cout << "不能打开视频文件" << endl;
+		return -1;
+	}
+	Mat dstMat;
+	while (1)
+	{
+		Mat frame;
+		Mat srcMat;
+		cap >> frame;		
+		threshold(frame, srcMat, 100, 255, THRESH_BINARY);
+		double threshold1 = 0, threshold2 = 0;
+		Canny(srcMat, dstMat, threshold1, threshold2, 3, false);
+		imshow("src", frame);
+		imshow("dst", dstMat);
+		waitKey(30);
+	}
+	return 0;
 }
-//均值滤波
+//旋转及缩放
+/*
 int test2()
 {
-	VideoCapture cap(0);
-	double scale = 0.5;
-	if (!cap.isOpened())
-	{
-		cout << "不能打开视频文件" << endl;
-		return -1;
-	}
-	Mat dstImage;
-	while (1)
-	{
-		Mat frame;
-		cap >> frame;
-		imshow("frame", frame);
-		blur(frame, dstImage, Size(5,5), Point(-1, -1), BORDER_DEFAULT);
-		imshow("均值滤波", dstImage);
-		waitKey(30);
-	}
+	Mat dstMat;
+	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
+	if (srcMat.empty()) return -1;
+	//旋转-40°
+	float angle = 7.0, scale = 1;
+	//
+	Point2f center(srcMat.cols*0.5,srcMat.rows*0.5);
+	//
+	const Mat affine_matrix = getRotationMatrix2D(center, angle, scale);
+	warpAffine(srcMat, dstMat, affine_matrix, srcMat.size());
+	imshow("src", srcMat);
+	imshow("dst", dstMat);
+	waitKey(0);
 	return 0;
 }
-//均值滤波
+*/
+//仿射变换
 int test3()
 {	
-	VideoCapture cap(0);
-	double scale = 0.5;
-	if (!cap.isOpened())
-	{
-		cout << "不能打开视频文件" << endl;
-		return -1;
-	}
-	Mat dstImage;
-	while (1)
-	{
-		Mat frame;
-		cap >> frame;
-		imshow("frame", frame);
-		GaussianBlur(frame, dstImage, Size(5, 5), 0, 0, BORDER_DEFAULT);
-		imshow("均值滤波", dstImage);
-		waitKey(30);
-	}
+	Mat dstMat;
+	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
+	if (srcMat.empty()) return -1;
+	const Point2f src_pt[] = { Point2f(200,200),
+							   Point2f(250,200),
+		                       Point2f(200,100) };
+	const Point2f dst_pt[] = { Point2f(300,100),
+						       Point2f(300,50),
+						       Point2f(200,100) };
+	const Mat affine_matrix = getAffineTransform(src_pt, dst_pt);
+	warpAffine(srcMat, dstMat, affine_matrix, srcMat.size());
+	imshow("src", srcMat);
+	imshow("dst", dstMat);
+	waitKey(0);
 	return 0;
 }
-//边缘提取
+//投影变换
 int test4()
 {
-	VideoCapture cap(0);
-	if (!cap.isOpened())
-	{
-		cout << "不能打开视频文件" << endl;
-		return -1;
-	}
-	Mat dstImage;
-	while (1)
-	{
-		Mat frame;
-		cap >> frame;
-		imshow("frame", frame);
-		/*
-		Mat dx;
-		Mat dy;
-		Sobel(frame, dx, -1, 1, 0, 3);
-		Sobel(frame, dy, -1, 0, 1, 3);
-		imshow("dx", dx);
-		imshow("dy", dy);*/
-		//Sobel(frame, dstImage, -1, 1, 0, 3);//x方向
-		Sobel(frame, dstImage, -1, 0, 1, 3);//y方向
-		imshow("边缘提取", dstImage);
-		waitKey(30);
-	}
+	Mat dstMat;
+	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
+	if (srcMat.empty()) return -1;
+	const Point2f pst1[] = {   Point2f(150,150),
+							   Point2f(150,300),
+							   Point2f(350,300),
+	                           Point2f(350,150)};
+	const Point2f pst2[] = {   Point2f(200,150),
+							   Point2f(200,300),
+							   Point2f(340,270),
+	                           Point2f(340,180)};
+	const Mat perspective_matrix = getPerspectiveTransform(pst1, pst2);
+	warpPerspective(srcMat, dstMat, perspective_matrix, srcMat.size());
+	imshow("src", srcMat);
+	imshow("dst", dstMat);
+	waitKey(0);
 	return 0;
 }
-//磨皮程序
+//图像矫正
 int test5()
 {
-	VideoCapture cap(0);
-	double scale = 0.5;
-	if (!cap.isOpened())
+	Mat dstMat;
+	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
+	if (srcMat.empty()) return -1;
+	Mat image = imread("C:/Users/滕曼/Desktop/1.jpg",0);
+	
+	int width = srcMat.rows;
+	int height = srcMat.cols;
+	uchar aver = 0;
+
+	//原图中的三个点
+	Point src_pt1, src_pt2, src_pt3;
+
+	//修正后的三个点：左上角,左下角和右下角
+	Point dst_pt1, dst_pt2, dst_pt3;
+	dst_pt1 = Point(0, 0);
+	dst_pt2 = Point(0, width - 1);
+	dst_pt3 = Point(width - 1, height - 1);
+
+	//遍历第一行像素
+	for (int i = 0; i < width; ++i) 
 	{
-		cout << "不能打开视频文件" << endl;
-		return -1;
+		aver = image.at<uchar>(i, height - 1);
+		if (aver < 127) {
+			src_pt1 = Point(i, 0);
+			break;
+		}
 	}
-	//0-180肤色
-	double i_minH = 0;
-	double i_maxH = 20;
-	//0-255
-	double i_minS = 43;
-	double i_maxS = 255;
-	//0-255 
-	double i_minV = 55;
-	double i_maxV = 255;
-	while (1)
+	//遍历第一列像素
+	for (int i = 0; i < height; ++i) 
 	{
-		Mat frame;
-		Mat hsvMat;
-		Mat detectMat;
-
-		cap >> frame;		
-		Size ResImgSiz = Size(frame.cols*scale, frame.rows*scale);
-		Mat rFrame = Mat(ResImgSiz, frame.type());
-		resize(frame, rFrame, ResImgSiz, INTER_LINEAR);
-		//将原图转化为HSV图像
-		cvtColor(rFrame, hsvMat, COLOR_BGR2HSV);
-		rFrame.copyTo(detectMat);
-
-		inRange(hsvMat, Scalar(i_minH, i_minS, i_minV), Scalar(i_maxH, i_maxS, i_maxV), detectMat);
-
-		Mat image; 
-		Mat dst;
-		GaussianBlur(rFrame, image, Size(11,11), 3, 3);		
-		rFrame.copyTo(dst);
-		image.copyTo(dst, detectMat);
-
-		imshow("HSV图像", detectMat);
-		imshow("未磨皮", dst);
-		imshow("高斯滤波后", image);
-		waitKey(30);
+		aver = image.at<uchar>(0, i);
+		if (aver < 250) {
+			src_pt2= Point(0, height - i);
+			break;
+		}
 	}
+	//遍历最后一行像素
+	for (int i = 0; i < width; ++i) 
+	{
+		aver = image.at<uchar>(i, 0);
+		if (aver < 127) {
+			src_pt3 = Point(i, height - 1);
+			break;
+		}
+	}
+	const Point2f pt1[] = { src_pt1, src_pt2, src_pt3 };
+	const Point2f pt2[] = { dst_pt1, dst_pt2, dst_pt3 };
+
+	Mat affine_matrix = getAffineTransform(pt1, pt2);
+	warpAffine(srcMat, dstMat, affine_matrix, srcMat.size());
+
+	imshow("src", srcMat);
+	imshow("dst", dstMat);
+	waitKey(0);
+	return 0;
 }
 int main()
 {
