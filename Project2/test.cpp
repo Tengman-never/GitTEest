@@ -9,7 +9,7 @@ int test1()
 	double scale = 0.5;
 	if (!cap.isOpened())
 	{
-		cout << "不能打开视频文件" << endl;
+		cout << "不能打开文件" << endl;
 		return -1;
 	}
 	Mat dstMat;
@@ -28,7 +28,6 @@ int test1()
 	return 0;
 }
 //旋转及缩放
-/*
 int test2()
 {
 	Mat dstMat;
@@ -46,7 +45,6 @@ int test2()
 	waitKey(0);
 	return 0;
 }
-*/
 //仿射变换
 int test3()
 {	
@@ -102,7 +100,7 @@ int test5()
 	//原图中的三个点
 	Point src_pt1, src_pt2, src_pt3;
 
-	//修正后的三个点：左上角,左下角和右下角
+	//修正后的三个点
 	Point dst_pt1, dst_pt2, dst_pt3;
 	dst_pt1 = Point(0, 0);
 	dst_pt2 = Point(0, width - 1);
@@ -112,7 +110,8 @@ int test5()
 	for (int i = 0; i < width; ++i) 
 	{
 		aver = image.at<uchar>(i, height - 1);
-		if (aver < 127) {
+		if (aver < 127)
+		{
 			src_pt1 = Point(i, 0);
 			break;
 		}
@@ -121,7 +120,8 @@ int test5()
 	for (int i = 0; i < height; ++i) 
 	{
 		aver = image.at<uchar>(0, i);
-		if (aver < 250) {
+		if (aver < 250) 
+		{
 			src_pt2= Point(0, height - i);
 			break;
 		}
@@ -130,7 +130,8 @@ int test5()
 	for (int i = 0; i < width; ++i) 
 	{
 		aver = image.at<uchar>(i, 0);
-		if (aver < 127) {
+		if (aver < 127) 
+		{
 			src_pt3 = Point(i, height - 1);
 			break;
 		}
