@@ -7,6 +7,7 @@ int test1()
 {
 	Mat src = imread("C:/Users/滕曼/Pictures/1.jpg");
 	Mat dst;
+
 	float angle = -10.0, scale = 1;
 	Point2f center(src.cols / 2.0, src.rows / 2.0);
 	Mat rot = getRotationMatrix2D(center,angle,scale);
@@ -29,7 +30,9 @@ int test2()
 	//threshold(srcMat,image,0,255,THRESH_OTSU);
 	double threshold1 = 60, threshold2 = 150;
 	Canny(srcMat, image, threshold1, threshold2, 3, false);
+    //霍夫变换
 	HoughLines(image, lines, 1, CV_PI/180, 100);
+	//画线
 	std::vector<cv::Vec2f>::iterator it = lines.begin();
 	for (; it != lines.end(); ++it)
 	{
