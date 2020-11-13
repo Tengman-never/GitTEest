@@ -5,155 +5,80 @@ using namespace std;
 //canny算子
 int test1()
 {
-	VideoCapture cap(0);
-	double scale = 0.5;
-	if (!cap.isOpened())
-	{
-		cout << "不能打开文件" << endl;
-		return -1;
-	}
-	Mat dstMat;
-	while (1)
-	{
-		Mat frame;
-		Mat srcMat;
-		cap >> frame;		
-		threshold(frame, srcMat, 100, 255, THRESH_BINARY);
-		double threshold1 = 0, threshold2 = 0;
-		Canny(srcMat, dstMat, threshold1, threshold2, 3, false);
-		imshow("src", frame);
-		imshow("dst", dstMat);
-		waitKey(30);
-	}
+	Mat src = imread("C:/Users/滕曼/Pictures/1.jpg");
+	Mat dst;
+	float angle = -10.0, scale = 1;
+	Point2f center(src.cols / 2.0, src.rows / 2.0);
+	Mat rot = getRotationMatrix2D(center,angle,scale);
+	Rect bbox = RotatedRect(center, src.size(), angle).boundingRect();
+	rot.at<double>(0, 2) += bbox.width / 2.0 - center.x;
+	rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
+	warpAffine(src, dst, rot, bbox.size());
+	imshow("src",src);
+	imshow("dst",dst);
+	waitKey(0);
 	return 0;
 }
 //旋转及缩放
 int test2()
 {
-	Mat dstMat;
-	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
-	if (srcMat.empty()) return -1;
-	//旋转-40°
-	float angle = 7.0, scale = 1;
-	//
-	Point2f center(srcMat.cols*0.5,srcMat.rows*0.5);
-	//
-	const Mat affine_matrix = getRotationMatrix2D(center, angle, scale);
-	warpAffine(srcMat, dstMat, affine_matrix, srcMat.size());
-	imshow("src", srcMat);
-	imshow("dst", dstMat);
+	std::vector<cv::Vec2f>lines;
+	Mat image;
+	Mat src=imread("D:/Program Files/QQ/文档/3050983836/FileRecv/18.jpg");
+	Mat srcMat = imread("D:/Program Files/QQ/文档/3050983836/FileRecv/18.jpg",0);
+	//threshold(srcMat,image,0,255,THRESH_OTSU);
+	double threshold1 = 60, threshold2 = 150;
+	Canny(srcMat, image, threshold1, threshold2, 3, false);
+	HoughLines(image, lines, 1, CV_PI/180, 100);
+	std::vector<cv::Vec2f>::iterator it = lines.begin();
+	for (; it != lines.end(); ++it)
+	{
+		float rho = (*it)[0], theta = (*it)[1];
+		Point pt1, pt2;
+		double a = cos(theta);
+		double b = sin(theta);
+		double x0 = a * rho;
+		double y0 = b * rho;
+		pt1.x = cv::saturate_cast<int>(x0 + 1000 * (-b));
+		pt1.y = cv::saturate_cast<int>(y0 + 1000 * (a));
+		pt2.x = cv::saturate_cast<int>(x0 - 1000 * (-b));
+		pt2.y = cv::saturate_cast<int>(y0 - 1000 * (a));
+		cv::line(src, pt1, pt2, Scalar(0,0,255), 1, CV_AA);
+	}
+	imshow("canny", image);
+	imshow("dst", src);
 	waitKey(0);
 	return 0;
 }
-//仿射变换
+//霍夫变换
 int test3()
 {	
-	Mat dstMat;
-	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
-	if (srcMat.empty()) return -1;
-	const Point2f src_pt[] = { Point2f(200,200),
-							   Point2f(250,200),
-		                       Point2f(200,100) };
-	const Point2f dst_pt[] = { Point2f(300,100),
-						       Point2f(300,50),
-						       Point2f(200,100) };
-	const Mat affine_matrix = getAffineTransform(src_pt, dst_pt);
-	warpAffine(srcMat, dstMat, affine_matrix, srcMat.size());
-	imshow("src", srcMat);
-	imshow("dst", dstMat);
-	waitKey(0);
-	return 0;
-}
-//投影变换
-int test4()
-{
-	Mat dstMat;
-	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
-	if (srcMat.empty()) return -1;
-	const Point2f pst1[] = {   Point2f(150,150),
-							   Point2f(150,300),
-							   Point2f(350,300),
-	                           Point2f(350,150)};
-	const Point2f pst2[] = {   Point2f(200,150),
-							   Point2f(200,300),
-							   Point2f(340,270),
-	                           Point2f(340,180)};
-	const Mat perspective_matrix = getPerspectiveTransform(pst1, pst2);
-	warpPerspective(srcMat, dstMat, perspective_matrix, srcMat.size());
-	imshow("src", srcMat);
-	imshow("dst", dstMat);
-	waitKey(0);
-	return 0;
-}
-//图像矫正
-int test5()
-{
-	Mat dstMat;
-	Mat srcMat = imread("C:/Users/滕曼/Desktop/1.jpg");
-	if (srcMat.empty()) return -1;
-	Mat image = imread("C:/Users/滕曼/Desktop/1.jpg",0);
-	
-	int width = srcMat.rows;
-	int height = srcMat.cols;
-	uchar aver = 0;
+	Mat image;
+	Mat src = imread("D:/Program Files/QQ/文档/3050983836/FileRecv/18.jpg");
+	Mat srcMat = imread("D:/Program Files/QQ/文档/3050983836/FileRecv/18.jpg", 0);
+	//threshold(srcMat,image,0,255,THRESH_OTSU);
+	double threshold1 = 60, threshold2 = 150;
+	Canny(srcMat, image, threshold1, threshold2, 3, false);
 
-	//原图中的三个点
-	Point src_pt1, src_pt2, src_pt3;
+	std::vector<cv::Vec4i>lines;
+	HoughLinesP(image, lines, 1, CV_PI/180, 40, 10 , 10);
 
-	//修正后的三个点
-	Point dst_pt1, dst_pt2, dst_pt3;
-	dst_pt1 = Point(0, 0);
-	dst_pt2 = Point(0, width - 1);
-	dst_pt3 = Point(width - 1, height - 1);
-
-	//遍历第一行像素
-	for (int i = 0; i < width; ++i) 
+	std::vector<cv::Vec4i>::iterator it = lines.begin();
+	for (size_t i = 0; i < lines.size(); i++)
 	{
-		aver = image.at<uchar>(i, height - 1);
-		if (aver < 127)
-		{
-			src_pt1 = Point(i, 0);
-			break;
-		}
+		cv::Vec4i line = lines[i];
+		cv::line(src, Point(line[0], line[1]), cv::Point(line[2], line[3]), Scalar(0, 0, 255), 1, CV_AA);
 	}
-	//遍历第一列像素
-	for (int i = 0; i < height; ++i) 
-	{
-		aver = image.at<uchar>(0, i);
-		if (aver < 250) 
-		{
-			src_pt2= Point(0, height - i);
-			break;
-		}
-	}
-	//遍历最后一行像素
-	for (int i = 0; i < width; ++i) 
-	{
-		aver = image.at<uchar>(i, 0);
-		if (aver < 127) 
-		{
-			src_pt3 = Point(i, height - 1);
-			break;
-		}
-	}
-	const Point2f pt1[] = { src_pt1, src_pt2, src_pt3 };
-	const Point2f pt2[] = { dst_pt1, dst_pt2, dst_pt3 };
-
-	Mat affine_matrix = getAffineTransform(pt1, pt2);
-	warpAffine(srcMat, dstMat, affine_matrix, srcMat.size());
-
-	imshow("src", srcMat);
-	imshow("dst", dstMat);
+	imshow("canny", image);
+	imshow("dst", src);
 	waitKey(0);
 	return 0;
 }
 int main()
 {
-	//test1();
+	test1();
 	//test2();
 	//test3();
-	//test4();
-	test5();
 	system("pause");
 	return 0;
 }
