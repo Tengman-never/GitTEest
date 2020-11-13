@@ -19,7 +19,7 @@ int test1()
 	waitKey(0);
 	return 0;
 }
-//旋转及缩放
+//霍夫变换
 int test2()
 {
 	std::vector<cv::Vec2f>lines;
