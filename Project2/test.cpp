@@ -36,13 +36,8 @@ int test1()
 	}
 	cvtColor(image, grayMat, COLOR_BGR2GRAY);
 	threshold(grayMat, binaryMat, 100, 255, THRESH_OTSU);
-	//vector<vector<Point>>contours;
-	//vector<Vec4i>hierarchy;
-	//findContours(binaryMat, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-
-	vector<Vec3f> circles;
+    vector<Vec3f> circles;
 	HoughCircles(grayMat, circles, HOUGH_GRADIENT, 1, 10, 100, 30, 5, 50);
-
 	for (size_t i = 0; i < circles.size(); i++)
 	{
 		Vec3f c = circles[i];
@@ -93,24 +88,52 @@ int test2()
 //
 int test3()
 {	
-	Mat image;
-	Mat src = imread("C:/Users/滕曼/Desktop/2.jpg");
-	Mat srcMat = imread("C:/Users/滕曼/Desktop/2.jpg", 0);
-	threshold(srcMat,image,0,255,THRESH_OTSU);
-	double threshold1 = 60, threshold2 = 150;
-	Canny(srcMat, image, threshold1, threshold2, 3, false);
+	Mat src = imread("C:/Users/滕曼/Pictures/3 (2).jpg");
+	float scale = 1;
+	double i_minH = 56;
+	double i_maxH = 180;
+	double i_minS = 43;
+	double i_maxS = 255;
+	double i_minV = 46;
+	double i_maxV = 255;
 
-	std::vector<cv::Vec4i>lines;
-	HoughLinesP(image, lines, 1, CV_PI/180, 40, 10 , 10);
+	Mat hsvMat;
+	Mat detectMat;
 
-	std::vector<cv::Vec4i>::iterator it = lines.begin();
-	for (size_t i = 0; i < lines.size(); i++)
+	Size ResImgSiz = Size(src.cols * scale, src.rows * scale);
+	Mat dst = Mat(ResImgSiz, src.type());
+	resize(src, dst, ResImgSiz, INTER_LINEAR);
+
+	cvtColor(dst, hsvMat, COLOR_BGR2HSV);
+
+	dst.copyTo(detectMat);
+	inRange(hsvMat, Scalar(i_minH, i_minS, i_minV), Scalar(i_maxH, i_maxS, i_maxV), detectMat);
+	threshold(detectMat, detectMat, 100, 255, THRESH_OTSU);
+
+	vector<Vec4i>hierarchy;
+	std::vector<std::vector<Point>> contours;
+	findContours(detectMat, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+	for (int i = 0; i < contours.size(); i++)
 	{
-		cv::Vec4i line = lines[i];
-		cv::line(src, Point(line[0], line[1]), cv::Point(line[2], line[3]), Scalar(0, 0, 255), 1, CV_AA);
+		RotatedRect rbox = minAreaRect(contours[i]);
+		float width = (float)rbox.size.width;
+		float height = (float)rbox.size.height;
+		float radio = width / height;
+		if (width >110 && height < 100)
+		{
+			//drawContours(src, contours, i, Scalar(0, 0, 255), 3, 8);
+			Point2f vtx[4];
+			rbox.points(vtx);
+			for (int j = 0; j < 4; j++)
+			{				
+				line(src,vtx[j],vtx[j < 3 ? j+1 : 0],Scalar(0,0,255),2,CV_AA);
+			}
+		}
 	}
-	imshow("canny", image);
-	imshow("dst", src);
+	imshow("src", src);
+	imshow("hsvMat",hsvMat);
+	imshow("detectMat",detectMat);
 	waitKey(0);
 	return 0;
 }
