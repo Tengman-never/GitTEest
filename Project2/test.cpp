@@ -2,146 +2,123 @@
 #include<opencv2/opencv.hpp>
 using namespace cv;
 using namespace std;
-//canny算子
-int test1()
+//图像、装有直方图信息的指针、量化级数、cell数目
+int calcHOG(Mat src,float *hist,int nAngle,int nSize)
 {
-	Mat grayMat,binaryMat;
-	Mat src = imread("C:/Users/滕曼/Desktop/1.png");
-	Mat image;
-	src.copyTo(image);
-	// 获取图像宽、高
-	int channels = src.channels();
-	int rows = src.rows; //高---行
-	int col = src.cols;//宽---列
-	int cols = src.cols * channels;
-	if (src.isContinuous())
+	int nX = src.cols / nSize;
+	int nY = src.rows / nSize;
+
+	int binAngle = 360 / nAngle;
+
+	//计算梯度及角度
+	Mat gx,gy;
+	Mat mag, angle;
+	Sobel(src, gx, CV_32F, 1, 0, 1);
+	Sobel(src, gy, CV_32F, 0, 1, 1);
+	cartToPolar(gx, gy, mag, angle, true);
+
+	Rect roi;
+	roi.width = nSize;
+	roi.height = nSize;
+	//遍历
+	for (int i = 0; i < nY; i++)
 	{
-		cols *= rows;
-		rows = 1;
-	}
-	// 每个像素点的每个通道255取反（0-255（黑-白））
-	uchar* p1;
-	uchar* p2;
-	for (int row = 0; row < rows; row++)
-	{
-		p1 = src.ptr<uchar>(row);// 获取像素指针
-		p2 = image.ptr<uchar>(row);
-		for (int col = 0; col < cols; col++)
+		for (int j = 0; j < nX; j++)
 		{
-			*p2 = 255 - *p1; // 取反
-			p2++;
-			p1++;
-		}
-
-	}
-	cvtColor(image, grayMat, COLOR_BGR2GRAY);
-	threshold(grayMat, binaryMat, 100, 255, THRESH_OTSU);
-    vector<Vec3f> circles;
-	HoughCircles(grayMat, circles, HOUGH_GRADIENT, 1, 10, 100, 30, 5, 50);
-	for (size_t i = 0; i < circles.size(); i++)
-	{
-		Vec3f c = circles[i];
-		circle(src, Point(c[0], c[1]), c[2], Scalar(0, 0, 255), -1, CV_AA);
-	}
-	imshow("src", src);
-	//imshow("grayMat", grayMat);
-	//imshow("binaryMat",binaryMat);
-	waitKey(0);
-	return 0;
-}
-//
-int test2()
-{
-	vector<vector<Point>>contours;
-	vector<Vec4i>hierarchy;
-	Mat binaryMat;
-	Mat src=imread("C:/Users/滕曼/Desktop/2.jpg");
-	Mat grayMat = imread("C:/Users/滕曼/Desktop/2.jpg",0); 
-	threshold(grayMat,binaryMat,0,255,THRESH_OTSU);
-	findContours(binaryMat,contours,hierarchy,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-	vector<Rect> boundRect(contours.size());
-	for(int i = 0;i < contours.size();i++)
-	{
-		RotatedRect rbox = minAreaRect(contours[i]);
-		float width = (float)rbox.size.width;
-		float height = (float)rbox.size.height;
-		float radio = width / height;
-		if (radio> 0.9 && radio<1.1)
-		{
-			boundRect[i] = boundingRect(Mat(contours[i]));
-			rectangle(src, boundRect[i].tl(), boundRect[i].br(), (0, 0, 255), 2, 8, 0);
-			//drawContours(src, contours, i, Scalar(0, 0, 255), 3, 8);
-			//Point2f vtx[4];
-			//rbox.points(vtx);
-			//for (int j = 0; j < 4; j++)
-			//{				
-			//	line(src,vtx[j],vtx[j < 3 ? j+1 : 0],Scalar(0,0,255),2,CV_AA);
-			//}
-		}
-	}	
-	imshow("src", src);
-	//imshow("grayMat", grayMat);
-	//imshow("binaryMat",binaryMat);
-	waitKey(0);
-	return 0;
-}
-//
-int test3()
-{	
-	Mat src = imread("C:/Users/滕曼/Pictures/3 (2).jpg");
-	float scale = 1;
-	double i_minH = 56;
-	double i_maxH = 180;
-	double i_minS = 43;
-	double i_maxS = 255;
-	double i_minV = 46;
-	double i_maxV = 255;
-
-	Mat hsvMat;
-	Mat detectMat;
-
-	Size ResImgSiz = Size(src.cols * scale, src.rows * scale);
-	Mat dst = Mat(ResImgSiz, src.type());
-	resize(src, dst, ResImgSiz, INTER_LINEAR);
-
-	cvtColor(dst, hsvMat, COLOR_BGR2HSV);
-
-	dst.copyTo(detectMat);
-	inRange(hsvMat, Scalar(i_minH, i_minS, i_minV), Scalar(i_maxH, i_maxS, i_maxV), detectMat);
-	threshold(detectMat, detectMat, 100, 255, THRESH_OTSU);
-
-	vector<Vec4i>hierarchy;
-	std::vector<std::vector<Point>> contours;
-	findContours(detectMat, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-
-	for (int i = 0; i < contours.size(); i++)
-	{
-		RotatedRect rbox = minAreaRect(contours[i]);
-		float width = (float)rbox.size.width;
-		float height = (float)rbox.size.height;
-		float radio = width / height;
-		if (width >110 && height < 100)
-		{
-			//drawContours(src, contours, i, Scalar(0, 0, 255), 3, 8);
-			Point2f vtx[4];
-			rbox.points(vtx);
-			for (int j = 0; j < 4; j++)
-			{				
-				line(src,vtx[j],vtx[j < 3 ? j+1 : 0],Scalar(0,0,255),2,CV_AA);
+			Mat roiMat;
+			Mat roiMag;
+			Mat roiAgl;
+			
+			roi.x = j * nSize;
+			roi.y = i * nSize;
+			//赋值图像，一个cell赋给一个roiMat
+			roiMat = src(roi);
+			roiMag = mag(roi);
+			roiAgl = angle(roi);
+			//直方图信息
+			int head = (i*nX + j)*nAngle;
+			for (int n = 0; n < roiMat.rows; n++)
+			{
+				for (int m = 0; m < roiMat.cols; m++)
+				{
+					//计算角度在哪个bin，通过int自动取整实现
+					int pos = (int)(roiAgl.at<float>(n, m) / binAngle);
+					//以像素点的值为权重
+					hist[head + pos] += roiMag.at<float>(n, m);
+				}
 			}
 		}
+
 	}
-	imshow("src", src);
-	imshow("hsvMat",hsvMat);
-	imshow("detectMat",detectMat);
 	waitKey(0);
 	return 0;
 }
+float normL2(float *hist1,float *hist2,int size)
+{
+	float sum = 0,dst = 0;
+	for (int i = 0; i < size; i++)
+	{
+		sum += (hist1[i] - hist2[i])*(hist1[i] - hist2[i]);
+	}
+	dst = sqrt(sum);
+	return dst;
+}
+
 int main()
 {
-	test1();
-	//test2();
-	//test3();
+	Mat refMat = imread("E:/C++demo/image/hogTemplate.jpg",0);
+	Mat plMat = imread("E:/C++demo/image/img1.jpg",0);
+	Mat bgMat = imread("E:/C++demo/image/img2.jpg",0);
+
+	int nAngle = 8;
+	int cellSize = 16;
+	int nX = refMat.cols / cellSize;
+	int nY = refMat.rows / cellSize;
+
+	int bins = nX * nY * nAngle;
+
+	float * ref_hist = new float[bins];
+	memset(ref_hist,0,sizeof(float)*bins);
+	float * pl_hist = new float[bins];
+	memset(pl_hist, 0, sizeof(float)*bins);
+	float * bg_hist = new float[bins];
+	memset(bg_hist, 0, sizeof(float)*bins);
+
+	int reCode = 0;
+	reCode = calcHOG(refMat, ref_hist, nAngle, cellSize);
+	reCode = calcHOG(plMat, pl_hist, nAngle, cellSize);
+	reCode = calcHOG(bgMat, bg_hist, nAngle, cellSize);
+
+	if (reCode != 0)
+	{
+		delete[] ref_hist;
+		delete[] pl_hist;
+		delete[] bg_hist;
+		return -1;
+	}
+
+	float dis1 = normL2(ref_hist, pl_hist, bins);
+	float dis2 = normL2(ref_hist, bg_hist, bins);
+	cout << "distance between reference and image1:" << dis1 << endl;
+	cout << "distance between reference and image2:" << dis2 << endl;
+
+	if (dis1 <= dis2)
+	{
+		cout << "image1 is more simular" << endl;
+	}
+	else
+	{
+		cout << "image2 is more simular" << endl;
+	}
+
+	imshow("hogTemplate", refMat);
+	imshow("image1", plMat);
+	imshow("image2", bgMat);
+	waitKey(0);
 	system("pause");
+
+	delete[] ref_hist;
+	delete[] pl_hist;
+	delete[] bg_hist;
 	return 0;
 }
