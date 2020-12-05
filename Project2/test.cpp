@@ -2,123 +2,208 @@
 #include<opencv2/opencv.hpp>
 using namespace cv;
 using namespace std;
-//图像、装有直方图信息的指针、量化级数、cell数目
-int calcHOG(Mat src,float *hist,int nAngle,int nSize)
+
+std::vector<Point>  mousePoints;
+Point points;
+
+void on_mouse(int EVENT, int x, int y, int flags, void* userdata)
 {
-	int nX = src.cols / nSize;
-	int nY = src.rows / nSize;
-
-	int binAngle = 360 / nAngle;
-
-	//计算梯度及角度
-	Mat gx,gy;
-	Mat mag, angle;
-	Sobel(src, gx, CV_32F, 1, 0, 1);
-	Sobel(src, gy, CV_32F, 0, 1, 1);
-	cartToPolar(gx, gy, mag, angle, true);
-
-	Rect roi;
-	roi.width = nSize;
-	roi.height = nSize;
-	//遍历
-	for (int i = 0; i < nY; i++)
+	Mat hh;
+	hh = *(Mat*)userdata;
+	Point p(x, y);
+	switch (EVENT)
 	{
-		for (int j = 0; j < nX; j++)
-		{
-			Mat roiMat;
-			Mat roiMag;
-			Mat roiAgl;
-			
-			roi.x = j * nSize;
-			roi.y = i * nSize;
-			//赋值图像，一个cell赋给一个roiMat
-			roiMat = src(roi);
-			roiMag = mag(roi);
-			roiAgl = angle(roi);
-			//直方图信息
-			int head = (i*nX + j)*nAngle;
-			for (int n = 0; n < roiMat.rows; n++)
-			{
-				for (int m = 0; m < roiMat.cols; m++)
-				{
-					//计算角度在哪个bin，通过int自动取整实现
-					int pos = (int)(roiAgl.at<float>(n, m) / binAngle);
-					//以像素点的值为权重
-					hist[head + pos] += roiMag.at<float>(n, m);
-				}
-			}
-		}
-
+	case EVENT_LBUTTONDOWN:
+	{
+		points.x = x;
+		points.y = y;
+		mousePoints.push_back(points);
+		circle(hh, points, 4, cvScalar(255, 255, 255), -1);
+		imshow("mouseCallback", hh);
 	}
-	waitKey(0);
-	return 0;
-}
-float normL2(float *hist1,float *hist2,int size)
-{
-	float sum = 0,dst = 0;
-	for (int i = 0; i < size; i++)
-	{
-		sum += (hist1[i] - hist2[i])*(hist1[i] - hist2[i]);
+	break;
 	}
-	dst = sqrt(sum);
-	return dst;
+
 }
-
-int main()
+int selectPolygon(Mat srcMat, Mat &dstMat)
 {
-	Mat refMat = imread("E:/C++demo/image/hogTemplate.jpg",0);
-	Mat plMat = imread("E:/C++demo/image/img1.jpg",0);
-	Mat bgMat = imread("E:/C++demo/image/img2.jpg",0);
+	vector<vector<Point>> contours;
+	Mat selectMat;
 
-	int nAngle = 8;
-	int cellSize = 16;
-	int nX = refMat.cols / cellSize;
-	int nY = refMat.rows / cellSize;
+	Mat m = cv::Mat::zeros(srcMat.size(), CV_32F);
+	m = 1;
 
-	int bins = nX * nY * nAngle;
-
-	float * ref_hist = new float[bins];
-	memset(ref_hist,0,sizeof(float)*bins);
-	float * pl_hist = new float[bins];
-	memset(pl_hist, 0, sizeof(float)*bins);
-	float * bg_hist = new float[bins];
-	memset(bg_hist, 0, sizeof(float)*bins);
-
-	int reCode = 0;
-	reCode = calcHOG(refMat, ref_hist, nAngle, cellSize);
-	reCode = calcHOG(plMat, pl_hist, nAngle, cellSize);
-	reCode = calcHOG(bgMat, bg_hist, nAngle, cellSize);
-
-	if (reCode != 0)
-	{
-		delete[] ref_hist;
-		delete[] pl_hist;
-		delete[] bg_hist;
+	if (!srcMat.empty()) {
+		srcMat.copyTo(selectMat);
+		srcMat.copyTo(dstMat);
+	}
+	else {
+		std::cout << "failed to read image!:" << std::endl;
 		return -1;
 	}
 
-	float dis1 = normL2(ref_hist, pl_hist, bins);
-	float dis2 = normL2(ref_hist, bg_hist, bins);
-	cout << "distance between reference and image1:" << dis1 << endl;
-	cout << "distance between reference and image2:" << dis2 << endl;
-
-	if (dis1 <= dis2)
-	{
-		cout << "image1 is more simular" << endl;
+	namedWindow("mouseCallback");
+	imshow("mouseCallback", selectMat);
+	setMouseCallback("mouseCallback", on_mouse, &selectMat);
+	waitKey(0);
+	destroyAllWindows();
+	//计算roi
+	contours.push_back(mousePoints);
+	if (contours[0].size() < 3) {
+		std::cout << "failed to read image!:" << std::endl;
+		return -1;
 	}
+
+	drawContours(m, contours, 0, Scalar(0), -1);
+
+	m.copyTo(dstMat);
+
+	return 0;
+}
+int mouseROI(Mat srcMat,Mat &dstMat)
+{
+	selectPolygon(srcMat, dstMat);
+	//imshow("srcMat", srcMat);
+	//imshow("select Area", dstMat);
+	waitKey(0);
+	return 0;
+}
+int ifftDemo(Mat &srcMat,Mat &nmask,Mat &nmag,int nflag,Mat &dspMat)
+{
+	Mat src;
+	threshold(srcMat,src,100,255,THRESH_OTSU);
+
+	int m = getOptimalDFTSize(src.rows); //2,3,5的倍数有更高效率的傅里叶变换
+	int n = getOptimalDFTSize(src.cols);
+	Mat padded;
+	//把灰度图像放在左上角,在右边和下边扩展图像,扩展部分填充为0;
+	copyMakeBorder(src, padded, 0, m - src.rows, 0, n - src.cols, BORDER_CONSTANT, Scalar::all(0));
+	//planes[0]为dft变换的实部，planes[1]为虚部，ph为相位， plane_true=mag为幅值
+	Mat planes[] = { Mat_<float>(padded), Mat::zeros(padded.size(), CV_32F) };
+	Mat planes_true = Mat_<float>(padded);
+	Mat ph = Mat_<float>(padded);
+	Mat complexImg;
+	//多通道complexImg既有实部又有虚部
+	merge(planes, 2, complexImg);
+	//对上边合成的mat进行傅里叶变换,***支持原地操作***,傅里叶变换结果为复数.通道1存的是实部,通道二存的是虚部
+	dft(complexImg, complexImg);
+	//把变换后的结果分割到两个mat,一个实部,一个虚部,方便后续操作
+	split(complexImg, planes);
+
+	//---------------此部分目的为更好地显示幅值---后续恢复原图时反着再处理一遍-------------------------
+	magnitude(planes[0], planes[1], planes_true);//幅度谱mag
+	phase(planes[0], planes[1], ph);//相位谱ph
+	Mat A = planes[0];
+	Mat B = planes[1];
+	Mat mag = planes_true;
+
+	mag += Scalar::all(1);//对幅值加1
+	//计算出的幅值一般很大，达到10^4,通常没有办法在图像中显示出来，需要对其进行log求解。
+	log(mag, mag);
+
+	//取矩阵中的最大值，便于后续还原时去归一化
+	double maxVal;
+	minMaxLoc(mag, 0, &maxVal, 0, 0);
+
+	//修剪频谱,如果图像的行或者列是奇数的话,那其频谱是不对称的,因此要修剪
+	mag = mag(Rect(0, 0, mag.cols & -2, mag.rows & -2));
+	ph = ph(Rect(0, 0, mag.cols & -2, mag.rows & -2));
+	Mat _magI = mag.clone();
+	//将幅度归一化到可显示范围。
+	normalize(_magI, _magI, 0, 1, CV_MINMAX);
+	//imshow("before rearrange", _magI);
+
+	//显示规则频谱图
+	int cx = mag.cols / 2;
+	int cy = mag.rows / 2;
+
+	//这里是以中心为标准，把mag图像分成四部分
+	Mat tmp;
+	Mat q0(mag, Rect(0, 0, cx, cy));
+	Mat q1(mag, Rect(cx, 0, cx, cy));
+	Mat q2(mag, Rect(0, cy, cx, cy));
+	Mat q3(mag, Rect(cx, cy, cx, cy));
+	q0.copyTo(tmp);
+	q3.copyTo(q0);
+	tmp.copyTo(q3);
+	q1.copyTo(tmp);
+	q2.copyTo(q1);
+	tmp.copyTo(q2);
+
+	normalize(mag, mag, 0, 1, CV_MINMAX);
+
+	mag = mag * 255;
+	imwrite("原频谱.jpg", mag);
+	/*--------------------------------------------------*/
+
+	mag = mag / 255;
+	cv::Mat mask;
+	Mat proceMag;
+	int flag = 1;
+	if (flag)
+		selectPolygon(mag, mask);
 	else
-	{
-		cout << "image2 is more simular" << endl;
-	}
+		mask = 1 - mask;
 
-	imshow("hogTemplate", refMat);
-	imshow("image1", plMat);
-	imshow("image2", bgMat);
+	mag = mag.mul(mask);
+
+	proceMag = mag * 255;
+	imwrite("处理后频谱.jpg", proceMag);
+
+	//前述步骤反着来一遍，目的是为了逆变换回原图
+	Mat q00(mag, Rect(0, 0, cx, cy));
+	Mat q10(mag, Rect(cx, 0, cx, cy));
+	Mat q20(mag, Rect(0, cy, cx, cy));
+	Mat q30(mag, Rect(cx, cy, cx, cy));
+
+	//交换象限
+	q00.copyTo(tmp);
+	q30.copyTo(q00);
+	tmp.copyTo(q30);
+	q10.copyTo(tmp);
+	q20.copyTo(q10);
+	tmp.copyTo(q20);
+
+	mag = mag * maxVal;//将归一化的矩阵还原 
+	exp(mag, mag);//对应于前述去对数
+	mag = mag - Scalar::all(1);//对应前述+1
+	polarToCart(mag, ph, planes[0], planes[1]);//由幅度谱mag和相位谱ph恢复实部planes[0]和虚部planes[1]
+	merge(planes, 2, complexImg);//将实部虚部合并
+
+
+	//-----------------------傅里叶的逆变换-----------------------------------
+	Mat ifft(Size(src.cols, src.rows), CV_8UC1);
+	//傅里叶逆变换
+	idft(complexImg, ifft, DFT_REAL_OUTPUT);
+	normalize(ifft, ifft, 0, 1, CV_MINMAX);
+	Mat dst;
+	Rect rect(0, 0, src.cols, src.rows);
+	dst = ifft(rect);
+	dst = dst * 255;
+
+	dst.convertTo(dspMat, CV_8UC1);
+	waitKey(0);
+	return 0;
+
+}
+int main()
+{
+	Mat src = imread("G:/捕获/srcMat.jpg", 0);
+	Mat src1 = imread("G:/捕获/srcmat1.jpg", 0);
+	//mouseROI(src, dst);
+	Mat mask;
+	Mat mag, mag1;
+	Mat dst, dst1;
+
+	ifftDemo(src, mask, mag, 1, dst);
+	ifftDemo(src1, mask, mag1,0, dst1);
+
+	Mat image;
+	addWeighted(dst, 0.5, dst1, 0.5, 0.0, image);
+	imshow("dst", dst);
+	imshow("dst1", dst1);
+	imshow("混合后", image);
 	waitKey(0);
 	system("pause");
-
-	delete[] ref_hist;
-	delete[] pl_hist;
-	delete[] bg_hist;
 	return 0;
 }
