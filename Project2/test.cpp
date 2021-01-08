@@ -2,89 +2,125 @@
 #include<opencv2/opencv.hpp>
 using namespace std;
 using namespace cv;
-void on_mouse(int EVENT, int x, int y, int flags, void* userdata);
-RNG rng(123);
+//限定最大类别
+const int MAX_CLUSTERS = 5;
+//生成五种颜色
+Scalar colorTab[] =
+{
+	Scalar(0,0,255),
+	Scalar(0,255,0),
+	Scalar(255,100,100),
+	Scalar(255, 0, 255),
+	Scalar(0,255,255)
+};
+//生成二维空间
+Mat img(500, 500, CV_8UC3);
+//随机数生成类
+RNG rng(12345);
+//K-means
+int test1() 
+{
+	for (;;)
+	{
+		int k, clusterCount = rng.uniform(2, MAX_CLUSTERS + 1);
+		int i, sampleCount = rng.uniform(1, 1001);
+		Mat points(sampleCount, 1, CV_32FC2), labels;
+
+		clusterCount = MIN(clusterCount, sampleCount);
+		std::vector<Point2f> centers;
+
+		/* generate random sample from multigaussian distribution */
+		for (k = 0; k < clusterCount; k++)
+		{
+			Point center;
+			center.x = rng.uniform(0, img.cols);
+			center.y = rng.uniform(0, img.rows);
+			Mat pointChunk = points.rowRange(k*sampleCount / clusterCount,
+				k == clusterCount - 1 ? sampleCount :
+				(k + 1)*sampleCount / clusterCount);
+			rng.fill(pointChunk, RNG::NORMAL, Scalar(center.x, center.y), Scalar(img.cols*0.05, img.rows*0.05));
+		}
+
+		randShuffle(points, 1, &rng);
+
+		double compactness = kmeans(points, clusterCount, labels,
+			TermCriteria(TermCriteria::EPS + TermCriteria::COUNT, 10, 1.0),
+			3, KMEANS_PP_CENTERS, centers);
+
+		img = Scalar::all(0);
+
+		for (i = 0; i < sampleCount; i++)
+		{
+			int clusterIdx = labels.at<int>(i);
+			Point ipt = points.at<Point2f>(i);
+			circle(img, ipt, 2, colorTab[clusterIdx], FILLED, LINE_AA);
+		}
+		for (i = 0; i < (int)centers.size(); ++i)
+		{
+			Point2f c = centers[i];
+			circle(img, c, 40, colorTab[i], 1, LINE_AA);
+		}
+		cout << "Compactness: " << compactness << endl;
+
+		imshow("clusters", img);
+
+		char key = (char)waitKey();
+		if (key == 27 || key == 'q' || key == 'Q') // 'ESC'
+			break;
+	}
+	return 0;
+}
+//抠图
+int createMaskByKmeans(cv::Mat src, cv::Mat & mask)
+{
+	if ((mask.type() != CV_8UC1) || (src.size() != mask.size())) 
+		return 0;
+
+	int width = src.cols;
+	int height = src.rows;
+
+	int pixNum = width * height;
+	int clusterCount = 2;
+	Mat labels;
+	Mat centers;
+
+	//制作kmeans用的数据
+	Mat sampleData = src.reshape(3, pixNum);
+	Mat km_data;
+	sampleData.convertTo(km_data, CV_32F);
+
+	//执行kmeans
+	TermCriteria criteria = TermCriteria(TermCriteria::EPS + TermCriteria::COUNT, 10, 0.1);
+	kmeans(km_data, clusterCount, labels, criteria, clusterCount, KMEANS_PP_CENTERS, centers);
+
+	//制作mask
+	uchar fg[2] = { 0,255 };
+	for (int row = 0; row < height; row++) {
+		for (int col = 0; col < width; col++) {
+			mask.at<uchar>(row, col) = fg[labels.at<int>(row*width + col)];
+		}
+	}
+	return 0;
+}
+void segColor()
+{
+	Mat src = imread("D:/1.jpg");
+
+	Mat mask = Mat::zeros(src.size(), CV_8UC1);
+	createMaskByKmeans(src, mask);
+
+	imshow("src", src);
+	imshow("mask", mask);
+
+	waitKey(0);
+
+}
+//特效
+
 void main()
 {
-	VideoCapture cap("C:/Users/滕曼/Desktop/video.mp4");
-	double scale = 1;
-	//0-180
-	double i_minH = 8;
-	double i_maxH = 10;
-	//0-255
-	double i_minS = 43;
-	double i_maxS = 255;
-	//0-255 
-	double i_minV = 46;
-	double i_maxV = 255;
+	//test1();
+	segColor();
 
-	while (1)
-	{
-		Mat frame;
-		Mat hsvMat;
-		Mat detectMat;
-		Mat image;
-		cap >> frame;
-		if (frame.empty())
-			break;
-		GaussianBlur(frame,frame, Size(5,5),0,0);
-		//ksize必须是大于1的奇数
-		//medianBlur(frame,frame,5);
-		//imshow("frame",frame);
-
-		Size ResImgSiz = Size(frame.cols*scale, frame.rows*scale);
-		Mat rFrame = Mat(ResImgSiz, frame.type());
-		resize(frame, rFrame, ResImgSiz, INTER_LINEAR);
-		//RGB转化为HSV  
-		cvtColor(rFrame, hsvMat, COLOR_BGR2HSV);
-		rFrame.copyTo(detectMat);
-		//主要是将在两个阈值内的像素值设置为白色（255），而不在阈值区间内的像素值设置为黑色（0）
-		//输出的detectMat是一幅二值化之后的图像。
-		cv::inRange(hsvMat, Scalar(i_minH, i_minS, i_minV), Scalar(i_maxH, i_maxS, i_maxV), detectMat);
-		//灰度化
-		threshold(detectMat, detectMat, 100, 255, THRESH_OTSU);
-		//setMouseCallback("【display】", on_mouse, &detectMat);
-
-		vector<Vec4i>hierarchy;
-		std::vector<std::vector<Point>> contours;
-		findContours(detectMat, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-		vector<Rect> boundRect(contours.size());
-		for (int i = 0; i < contours.size(); i++)
-		{
-			RotatedRect rbox = minAreaRect(contours[i]);
-			float width = (float)rbox.size.width;
-			float height = (float)rbox.size.height;
-			float radio = width / height;
-			if (width * height > 280 && width > 30)
-			{
-				boundRect[i] = boundingRect(Mat(contours[i]));
-				rectangle(rFrame, boundRect[i].tl(), boundRect[i].br(), (0, 0, 255), 2, 8, 0);
-			}
-		}
-	
-
-		/*imshow("frame", frame);*/
-		imshow("whie:in the range", detectMat);
-		imshow("rFrame", rFrame);
-		waitKey(30);
-	}
 }
-void on_mouse(int EVENT, int x, int y, int flags, void* userdata)
-{
-	Mat hh;
-	hh = *(Mat*)userdata;
-	Point p(x, y);
-	switch (EVENT)
-	{
-	case EVENT_LBUTTONDOWN:
-	{
 
-		printf("b=%d\t", hh.at<Vec3b>(p)[0]);
-		printf("g=%d\t", hh.at<Vec3b>(p)[1]);
-		printf("r=%d\n", hh.at<Vec3b>(p)[2]);
-		circle(hh, p, 2, Scalar(255), 3);
-	}
-	break;
-
-	}
-}
