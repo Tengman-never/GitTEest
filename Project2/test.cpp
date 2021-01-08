@@ -73,7 +73,7 @@ int test1()
 //抠图
 int createMaskByKmeans(cv::Mat src, cv::Mat & mask)
 {
-	if ((mask.type() != CV_8UC1) || (src.size() != mask.size())) 
+	if ((mask.type() != CV_8UC1) || (src.size() != mask.size()))
 		return 0;
 
 	int width = src.cols;
@@ -100,11 +100,11 @@ int createMaskByKmeans(cv::Mat src, cv::Mat & mask)
 			mask.at<uchar>(row, col) = fg[labels.at<int>(row*width + col)];
 		}
 	}
-	return 0;
+		return 0;
 }
 void segColor()
 {
-	Mat src = imread("D:/1.jpg");
+	Mat src = imread("E:/C++demo/image/15.jpg");
 
 	Mat mask = Mat::zeros(src.size(), CV_8UC1);
 	createMaskByKmeans(src, mask);
@@ -115,8 +115,13 @@ void segColor()
 	waitKey(0);
 
 }
-//特效
-
+////特效
+void test3()
+{
+	Mat src = imread("E:/C++demo/image/15.jpg");
+	Mat mask = Mat::zeros(src.size(), CV_8UC1);
+	createMaskByKmeans(src, mask);
+}
 void main()
 {
 	//test1();
