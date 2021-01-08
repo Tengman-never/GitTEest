@@ -2,7 +2,7 @@
 #include<opencv2/opencv.hpp>
 using namespace std;
 using namespace cv;
-void on_mouse(int EVENT, int x, int y, int flags, void* userdata);
+//void on_mouse(int EVENT, int x, int y, int flags, void* userdata);
 RNG rng(123);
 void main()
 {
@@ -15,7 +15,7 @@ void main()
 	double i_minS = 43;
 	double i_maxS = 255;
 	//0-255 
-	double i_minV = 46;
+	double i_minV = 120;
 	double i_maxV = 255;
 
 	while (1)
@@ -69,22 +69,22 @@ void main()
 		waitKey(30);
 	}
 }
-void on_mouse(int EVENT, int x, int y, int flags, void* userdata)
-{
-	Mat hh;
-	hh = *(Mat*)userdata;
-	Point p(x, y);
-	switch (EVENT)
-	{
-	case EVENT_LBUTTONDOWN:
-	{
-
-		printf("b=%d\t", hh.at<Vec3b>(p)[0]);
-		printf("g=%d\t", hh.at<Vec3b>(p)[1]);
-		printf("r=%d\n", hh.at<Vec3b>(p)[2]);
-		circle(hh, p, 2, Scalar(255), 3);
-	}
-	break;
-
-	}
-}
+//void on_mouse(int EVENT, int x, int y, int flags, void* userdata)
+//{
+//	Mat hh;
+//	hh = *(Mat*)userdata;
+//	Point p(x, y);
+//	switch (EVENT)
+//	{
+//	case EVENT_LBUTTONDOWN:
+//	{
+//
+//		printf("b=%d\t", hh.at<Vec3b>(p)[0]);
+//		printf("g=%d\t", hh.at<Vec3b>(p)[1]);
+//		printf("r=%d\n", hh.at<Vec3b>(p)[2]);
+//		circle(hh, p, 2, Scalar(255), 3);
+//	}
+//	break;
+//
+//	}
+//}
