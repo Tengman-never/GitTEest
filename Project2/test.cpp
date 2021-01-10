@@ -3,14 +3,9 @@
 using namespace std;
 using namespace cv;
 #include "opencv2/dnn.hpp"
+#include "parameters.h"
 std::vector<std::string> classes;
-//选择需要演示的demo
-#define DEMO_METHOD		1			//0:yolov3 demo	1:openpose demo	
-
-//参数设置
-#define YOLOV3_VIDEO		"E:/C++demo/vTest.mp4"		
-#define OPENPOSE_VIDEO		"E:/C++demo/openposeTest.mp4"	
-
+	
 float confThreshold = 0.5; // Confidence threshold
 float nmsThreshold = 0.4;  // Non-maximum suppression threshold
 int inpWidth = 416;        // Width of network's input image
@@ -18,8 +13,6 @@ int inpHeight = 416;       // Height of network's input image
 
 
 // key point 连接表, [model_id][pair_id][from/to]
-// 详细解释见
-// https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md
 
 int POSE_PAIRS[3][20][2] = {
 	{   // COCO body
