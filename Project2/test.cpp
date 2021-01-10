@@ -5,7 +5,8 @@ using namespace cv;
 #include "opencv2/dnn.hpp"
 #include "parameters.h"
 std::vector<std::string> classes;
-	
+
+void drawPred(int classId, float conf, int left, int top, int right, int bottom, cv::Mat& frame);
 float confThreshold = 0.5; // Confidence threshold
 float nmsThreshold = 0.4;  // Non-maximum suppression threshold
 int inpWidth = 416;        // Width of network's input image
