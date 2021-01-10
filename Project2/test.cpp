@@ -120,30 +120,20 @@ void segColor()
 
 void test3()
 {
-	Mat src = imread("E:/C++demo/image/jing.jpg");
-	Mat mask = imread("E:/C++demo/image/dragon.jpg");
+	Mat img_back = imread("E:/C++demo/image/jing.jpg");
+	Mat img = imread("E:/C++demo/image/dragon.jpg");
 
-	Mat mask1 = Mat::zeros(mask.size(), CV_8UC1);
-	createMaskByKmeans(mask, mask1);
-	imshow("src", src);
+	Mat mask = Mat::zeros(img.size(), CV_8UC1);
+	createMaskByKmeans(img, mask);
+
+	imshow("src", img_back);
+	imshow("img", img);
 	imshow("mask", mask);
-	imshow("mask1", mask1);
-	//Mat dst;
-	//src.copyTo(dst);
-	Mat dst = Mat::zeros(src.size(), CV_8UC3);
+	Mat dst;
+	img_back.copyTo(dst);
 
-	int width = mask.cols;
-	int height = mask.rows;
+    img.copyTo(dst,mask);
 
-	for (int row = 0; row < height; row++) {
-		for (int col = 0; col < width; col++)
-		{
-			if (mask1.at<uchar>(row, col) = 0)
-				dst.at<uchar>(row,col) = src.at<uchar>(row, col);	
-			else
-				dst.at<uchar>(row, col) = mask.at<uchar>(row, col);
-		}
-	}
 	imshow("dst", dst);
 	waitKey(0);
 
