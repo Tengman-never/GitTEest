@@ -133,7 +133,7 @@ void drawPred(int classId, float conf, int left, int top, int right, int bottom,
 int yoloV3()
 {
 
-	VideoCapture cap(YOLOV3_VIDEO);
+	VideoCapture cap("E:/C++demo/YOLOV3_VIDEO");
 
 	if (!cap.isOpened())return -1;
 
@@ -320,10 +320,17 @@ int openpose()
 	return 0;
 }
 
-void main()
+int main()
 {
-	//test1();
-
+	int method = DEMO_METHOD;
+	if (method == 0) {
+		yoloV3();
+	}
+	else if (method == 1) {
+		openpose();
+	}
+	system("pause");
+	return 0;
 
 }
 
