@@ -202,14 +202,13 @@ int yoloV3()
 			break;
 		}
 	}
-
+	waitKey(30);
 	return 0;
 
 }
 
 int openpose()
 {
-
 	//读入网络模型和权重文件
 	String modelTxt = "E:/C++demo/openpose_pose_coco.prototxt";
 	String modelBin = "E:/C++demo/pose_iter_440000.caffemodel";
