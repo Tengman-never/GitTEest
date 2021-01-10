@@ -2,7 +2,14 @@
 #include<opencv2/opencv.hpp>
 using namespace std;
 using namespace cv;
+#include "opencv2/dnn.hpp"
 std::vector<std::string> classes;
+//选择需要演示的demo
+#define DEMO_METHOD		1			//0:yolov3 demo	1:openpose demo	
+
+//参数设置
+#define YOLOV3_VIDEO		"E:/C++demo/vTest.mp4"		
+#define OPENPOSE_VIDEO		"E:/C++demo/openposeTest.mp4"	
 
 float confThreshold = 0.5; // Confidence threshold
 float nmsThreshold = 0.4;  // Non-maximum suppression threshold
@@ -11,6 +18,9 @@ int inpHeight = 416;       // Height of network's input image
 
 
 // key point 连接表, [model_id][pair_id][from/to]
+// 详细解释见
+// https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md
+
 int POSE_PAIRS[3][20][2] = {
 	{   // COCO body
 		{ 1,2 },{ 1,5 },{ 2,3 },
@@ -133,16 +143,16 @@ void drawPred(int classId, float conf, int left, int top, int right, int bottom,
 int yoloV3()
 {
 
-	VideoCapture cap("E:/C++demo/YOLOV3_VIDEO");
+	VideoCapture cap(YOLOV3_VIDEO);
 
 	if (!cap.isOpened())return -1;
 
 
 	//coco数据集的名称文件，80类
-	string classesFile = " E:/C++demo/coco.names";
+	string classesFile = "E:/C++demo/coco.names";
 	//yolov3网络模型文件
 	String yolov3_model = "E:/C++demo/yolov3.cfg";
-	//权重
+	//模型权重文件
 	String weights = "E:/C++demo/yolov3.weights";
 
 	//将coco.names中的80类名称转换为vector形式
@@ -162,8 +172,8 @@ int yoloV3()
 
 	cv::dnn::Net net = cv::dnn::readNetFromDarknet(yolov3_model, weights);
 
-	net.setPreferableBackend(DNN_BACKEND_DEFAULT);
-	net.setPreferableTarget(DNN_TARGET_CPU);
+	net.setPreferableBackend(dnn::DNN_BACKEND_DEFAULT);
+	net.setPreferableTarget(dnn::DNN_TARGET_CPU);
 
 	cv::Mat frame;
 
@@ -233,7 +243,7 @@ int openpose()
 		}
 
 		//创建输入
-		Mat inputBlob = blobFromImage(frame, 1.0 / 255, Size(W_in, H_in), Scalar(0, 0, 0), false, false);
+		Mat inputBlob = dnn::blobFromImage(frame, 1.0 / 255, Size(W_in, H_in), Scalar(0, 0, 0), false, false);
 
 		//输入
 		net.setInput(inputBlob);
@@ -317,6 +327,9 @@ int openpose()
 		waitKey(30);
 
 	}
+
+
+
 	return 0;
 }
 
