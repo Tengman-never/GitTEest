@@ -2,6 +2,18 @@
 #include<opencv2/opencv.hpp>
 using namespace std;
 using namespace cv;
+
+VideoCapture createInput(bool useCamera, std::string videoPath) {
+	//选择输入
+	VideoCapture capVideo;
+	if (useCamera) {
+		capVideo.open(0);
+	}
+	else {
+		capVideo.open(videoPath);
+	}
+	return capVideo;
+}
 //限定最大类别
 const int MAX_CLUSTERS = 5;
 //生成五种颜色
@@ -118,31 +130,64 @@ void segColor()
 //特效
 //融合算法
 
-void test3()
-{
-	Mat img_back = imread("E:/C++demo/image/jing.jpg");
-	Mat img = imread("E:/C++demo/image/dragon.jpg");
+void addEffect() {
+	VideoCapture cap1;
+	cap1.open("E:/C++demo/image/bg.mp4");
+	VideoCapture cap2;
+	cap2.open("E:/C++demo/image/dragon.mp4");
 
-	Mat mask = Mat::zeros(img.size(), CV_8UC1);
-	createMaskByKmeans(img, mask);
+	VideoWriter video("E:/C++demo/image/result.avi", CV_FOURCC('M', 'P', '4', '2'), 20.0, Size(320, 568));
 
-	imshow("src", img_back);
-	imshow("img", img);
-	imshow("mask", mask);
-	Mat dst;
-	img_back.copyTo(dst);
+	int currentFrame1 = 0;
+	int currentFrame2 = 0;
 
-    img.copyTo(dst,mask);
+	while (1) {
+		Mat frame1, frame2, frame3;
 
-	imshow("dst", dst);
-	waitKey(0);
+		cap1 >> frame1;
+		cap2 >> frame2;
 
+		//利用K-means抠图，制作mask
+		Mat mask = Mat::zeros(frame2.size(), CV_8UC1);
+		createMaskByKmeans(frame2, mask);
+		frame2.copyTo(frame3, mask);
+		//imshow("dragon_mask", mask);
+		//imshow("dragon_after_mask", frame3);
+
+		//不加这个判断条件视频结束后会报错
+		if (!frame1.empty()) {
+			resize(frame1, frame1, frame2.size());
+			frame3.copyTo(frame1, mask);
+			//imshow("bg", frame1);
+			//将图片转成视频并保存
+			video << frame1;
+		}
+
+		//由于视频时长原因，对"bg.mp4"进行循环播放
+		if (currentFrame1 == cap1.get(CV_CAP_PROP_FRAME_COUNT) - 1)
+		{
+			currentFrame1 = 0;
+			cap1.set(CV_CAP_PROP_POS_FRAMES, 0);
+		}
+
+		//结束帧
+		if (currentFrame2 > 440) {
+			currentFrame2 = 0;
+			cout << "Video production completed !" << endl;
+			break;
+		}
+
+		waitKey(30);
+		currentFrame1++;
+		currentFrame2++;
+
+	}
 }
 int main()
 {
 	//test1();
 	//segColor();
-	test3();
+	addEffect();
 	system("pause");
 	return 0;
 }
